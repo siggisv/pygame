@@ -244,6 +244,24 @@ class Sprite(object):
                                  "group.change_layer(sprite, new_layer) "
                                  "instead.")
 
+    @property
+    def radius(self):
+        if not hasattr(self, "_radius"):
+        # approximating the radius of a square by using half of the diagonal
+        # might give false positives (especially if its a long small rect)
+            rect = self.rect
+            self._radius = (0.5 * ((rect.width ** 2 +
+                                  rect.height ** 2) ** 0.5))
+        return self._radius
+
+    @radius.setter
+    def radius(self, value):
+        self._radius = value
+
+    @radius.deleter
+    def radius(self):
+        del self._radius
+
 
 class DirtySprite(Sprite):
     """a more featureful subclass of Sprite with more attributes
@@ -1483,27 +1501,9 @@ def collide_circle(left, right):
     ydistance = left.rect.centery - right.rect.centery
     distancesquared = xdistance ** 2 + ydistance ** 2
 
-    if hasattr(left, 'radius'):
-        leftradius = left.radius
-    else:
-        leftrect = left.rect
-        # approximating the radius of a square by using half of the diagonal,
-        # might give false positives (especially if its a long small rect)
-        leftradius = (0.5 * ((leftrect.width ** 2 +
-                              leftrect.height ** 2) ** 0.5))
-        # store the radius on the sprite for next time
-        setattr(left, 'radius', leftradius)
+    leftradius = left.radius
+    rightradius = right.radius
 
-    if hasattr(right, 'radius'):
-        rightradius = right.radius
-    else:
-        rightrect = right.rect
-        # approximating the radius of a square by using half of the diagonal
-        # might give false positives (especially if its a long small rect)
-        rightradius = (0.5 * ((rightrect.width ** 2 +
-                               rightrect.height ** 2) ** 0.5))
-        # store the radius on the sprite for next time
-        setattr(right, 'radius', rightradius)
     return distancesquared <= (leftradius + rightradius) ** 2
 
 
@@ -1562,25 +1562,8 @@ class collide_circle_ratio(object):  # noqa pylint: disable=invalid-name; this i
         ydistance = left.rect.centery - right.rect.centery
         distancesquared = xdistance ** 2 + ydistance ** 2
 
-        if hasattr(left, "radius"):
-            leftradius = left.radius
-        else:
-            leftrect = left.rect
-            leftradius = (0.5 * ((leftrect.width ** 2 +
-                                  leftrect.height ** 2) ** 0.5))
-            # store the radius on the sprite for next time
-            setattr(left, 'radius', leftradius)
-        leftradius *= ratio
-
-        if hasattr(right, "radius"):
-            rightradius = right.radius
-        else:
-            rightrect = right.rect
-            rightradius = (0.5 * ((rightrect.width ** 2 +
-                                   rightrect.height ** 2) ** 0.5))
-            # store the radius on the sprite for next time
-            setattr(right, 'radius', rightradius)
-        rightradius *= ratio
+        leftradius = left.radius * ratio
+        rightradius = right.radius * ratio
 
         return distancesquared <= (leftradius + rightradius) ** 2
 
