@@ -111,6 +111,7 @@ class Sprite(object):
 
     def __init__(self, *groups):
         self.__g = {}  # The groups the sprite is in
+        self._get_radius = self._get_radius_init
         if groups:
             self.add(*groups)
 
@@ -244,23 +245,34 @@ class Sprite(object):
                                  "group.change_layer(sprite, new_layer) "
                                  "instead.")
 
-    @property
-    def radius(self):
-        if not hasattr(self, "_radius"):
+    def _get_radius_init(self):
         # approximating the radius of a square by using half of the diagonal
         # might give false positives (especially if its a long small rect)
-            rect = self.rect
-            self._radius = (0.5 * ((rect.width ** 2 +
+        rect = self.rect
+        self._radius = (0.5 * ((rect.width ** 2 +
                                   rect.height ** 2) ** 0.5))
+        self._get_radius = self._get_radius_post
         return self._radius
+
+    def _get_radius_post(self):
+        return self._radius
+
+    def _get_radius(self):
+        return self._get_radius_init()
+
+    @property
+    def radius(self):
+        return self._get_radius()
 
     @radius.setter
     def radius(self, value):
         self._radius = value
+        self._get_radius = self._get_radius_post
 
     @radius.deleter
     def radius(self):
         del self._radius
+        self._get_radius = self._get_radius_init
 
 
 class DirtySprite(Sprite):
@@ -1501,8 +1513,8 @@ def collide_circle(left, right):
     ydistance = left.rect.centery - right.rect.centery
     distancesquared = xdistance ** 2 + ydistance ** 2
 
-    leftradius = left.radius
-    rightradius = right.radius
+    leftradius = left._get_radius()
+    rightradius = right._get_radius()
 
     return distancesquared <= (leftradius + rightradius) ** 2
 
@@ -1562,8 +1574,8 @@ class collide_circle_ratio(object):  # noqa pylint: disable=invalid-name; this i
         ydistance = left.rect.centery - right.rect.centery
         distancesquared = xdistance ** 2 + ydistance ** 2
 
-        leftradius = left.radius * ratio
-        rightradius = right.radius * ratio
+        leftradius = left._get_radius() * ratio
+        rightradius = right._get_radius() * ratio
 
         return distancesquared <= (leftradius + rightradius) ** 2
 
