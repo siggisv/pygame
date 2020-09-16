@@ -13,7 +13,7 @@ import pygame, pygame.image, pygame.pkgdata
 from pygame.compat import xrange_, ord_, unicode_
 
 
-def test_magic(f, magic_hex):
+def _check_magic(f, magic_hex):
     """ tests a given file to see if the magic hex matches.
     """
     data = f.read(len(magic_hex))
@@ -29,7 +29,7 @@ def test_magic(f, magic_hex):
 
 
 class ImageModuleTest(unittest.TestCase):
-    def testLoadIcon(self):
+    def test_load__bmp(self):
         """ see if we can load the pygame icon.
         """
         f = pygame.pkgdata.getResource("pygame_icon.bmp")
@@ -41,7 +41,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(surf.get_height(), 32)
         self.assertEqual(surf.get_width(), 32)
 
-    def testLoadPNG(self):
+    def test_load__png(self):
         """ see if we can load a png with color values in the proper channels.
         """
         # Create a PNG file with known colors
@@ -49,7 +49,10 @@ class ImageModuleTest(unittest.TestCase):
         greenish_pixel = (0, 220, 0, 255)
         bluish_pixel = (0, 0, 230, 255)
         greyish_pixel = (110, 120, 130, 140)
-        pixel_array = [reddish_pixel + greenish_pixel, bluish_pixel + greyish_pixel]
+        pixel_array = [
+                reddish_pixel + greenish_pixel,
+                bluish_pixel + greyish_pixel
+        ]
 
         f_descriptor, f_path = tempfile.mkstemp(suffix=".png")
 
@@ -76,7 +79,7 @@ class ImageModuleTest(unittest.TestCase):
 
         os.remove(f_path)
 
-    def testLoadJPG(self):
+    def test_load__jpg(self):
         """ see if we can load a jpg.
         """
 
@@ -91,7 +94,7 @@ class ImageModuleTest(unittest.TestCase):
         #     surf = pygame.image.load(open(os.path.join("examples", "data",
         #         "alien1.jpg"), "rb"))
 
-    def testSaveJPG(self):
+    def test_save__jpg(self):
         """ JPG equivalent to issue #211 - color channel swapping
 
         Make sure the SDL surface color masks represent the rgb memory format
@@ -116,7 +119,8 @@ class ImageModuleTest(unittest.TestCase):
         #  as (rect, color) pairs.
         def as_rect(square_x, square_y):
             return Rect(
-                square_x * square_len, square_y * square_len, square_len, square_len
+                square_x * square_len, square_y * square_len,
+                square_len, square_len
             )
 
         squares = [
@@ -149,7 +153,7 @@ class ImageModuleTest(unittest.TestCase):
 
         os.remove(f_path)
 
-    def testSavePNG32(self):
+    def test_save__png32(self):
         """ see if we can save a png with color values in the proper channels.
         """
         # Create a PNG file with known colors
@@ -185,7 +189,7 @@ class ImageModuleTest(unittest.TestCase):
             del reader
             os.remove(f_path)
 
-    def testSavePNG24(self):
+    def test_save__png24(self):
         """ see if we can save a png with color values in the proper channels.
         """
         # Create a PNG file with known colors
@@ -245,7 +249,8 @@ class ImageModuleTest(unittest.TestCase):
                     # Test the magic numbers at the start of the file to ensure
                     # they are saved as the correct file type.
                     self.assertEqual(
-                        (1, fmt), (test_magic(handle, magic_hex[fmt.lower()]), fmt)
+                        (1, fmt),
+                        (_check_magic(handle, magic_hex[fmt.lower()]), fmt)
                     )
 
                 # load the file to make sure it was saved correctly.
@@ -258,7 +263,7 @@ class ImageModuleTest(unittest.TestCase):
                 # clean up the temp file, comment out to leave tmp file after run.
                 os.remove(temp_filename)
 
-    def test_save_to_fileobject(self):
+    def test_save__to_fileobject(self):
         s = pygame.Surface((1, 1))
         s.fill((23, 23, 23))
         bytes_stream = io.BytesIO()
@@ -268,7 +273,7 @@ class ImageModuleTest(unittest.TestCase):
         s2 = pygame.image.load(bytes_stream, "tga")
         self.assertEqual(s.get_at((0, 0)), s2.get_at((0, 0)))
 
-    def test_save_tga(self):
+    def test_save__tga(self):
         s = pygame.Surface((1, 1))
         s.fill((23, 23, 23))
         with tempfile.NamedTemporaryFile(suffix=".tga", delete=False) as f:
@@ -318,7 +323,7 @@ class ImageModuleTest(unittest.TestCase):
                         handle.seek(0)
                         self.assertEqual(
                             (1, fmt),
-                            (test_magic(handle, magic_hex[fmt.lower()]), fmt)
+                            (_check_magic(handle, magic_hex[fmt.lower()]), fmt)
                         )
                     # load the file to make sure it was saved correctly.
                     handle.flush()
@@ -327,7 +332,7 @@ class ImageModuleTest(unittest.TestCase):
                     self.assertEqual(s2.get_at((0, 0)), s.get_at((0, 0)))
             os.remove(tmp_filename)
 
-    def test_save_colorkey(self):
+    def test_save__colorkey(self):
         """ make sure the color key is not changed when saving.
         """
         s = pygame.Surface((10, 10), pygame.SRCALPHA, 32)
@@ -348,7 +353,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(colorkey1, colorkey2)
         self.assertEqual(p1, s2.get_at((0, 0)))
 
-    def test_load_unicode_path(self):
+    def test_load__unicode_path(self):
         import shutil
 
         orig = unicode_(example_path("data/asprite.bmp"))
@@ -380,11 +385,11 @@ class ImageModuleTest(unittest.TestCase):
             except EnvironmentError:
                 pass
 
-    def test_save_unicode_path(self):
+    def test_save__unicode_path(self):
         """save unicode object with non-ASCII chars"""
         self._unicode_save(u"你好.bmp")
 
-    def assertPremultipliedAreEqual(self, string1, string2, source_string):
+    def _assertPremultipliedAreEqual(self, string1, string2, source_string):
         self.assertEqual(len(string1), len(string2))
         block_size = 20
         if string1 != string2:
@@ -395,7 +400,8 @@ class ImageModuleTest(unittest.TestCase):
                 if block1 != block2:
                     source_block = source_string[block_start:block_end]
                     msg = (
-                        "string difference in %d to %d of %d:\n%s\n%s\nsource:\n%s"
+                        "string difference in %d to %d of %d:\n"
+                        "%s\n%s\nsource:\n%s"
                         % (
                             block_start,
                             block_end,
@@ -407,8 +413,8 @@ class ImageModuleTest(unittest.TestCase):
                     )
                     self.fail(msg)
 
-    def test_to_string__premultiplied(self):
-        """ test to make sure we can export a surface to a premultiplied alpha string
+    def test_tostring__premultiplied(self):
+        """make sure we can export a surface to a premultiplied alpha string
         """
 
         def convertRGBAtoPremultiplied(surface_to_modify):
@@ -432,12 +438,12 @@ class ImageModuleTest(unittest.TestCase):
                 )
         premultiplied_copy = test_surface.copy()
         convertRGBAtoPremultiplied(premultiplied_copy)
-        self.assertPremultipliedAreEqual(
+        self._assertPremultipliedAreEqual(
             pygame.image.tostring(test_surface, "RGBA_PREMULT"),
             pygame.image.tostring(premultiplied_copy, "RGBA"),
             pygame.image.tostring(test_surface, "RGBA"),
         )
-        self.assertPremultipliedAreEqual(
+        self._assertPremultipliedAreEqual(
             pygame.image.tostring(test_surface, "ARGB_PREMULT"),
             pygame.image.tostring(premultiplied_copy, "ARGB"),
             pygame.image.tostring(test_surface, "ARGB"),
@@ -521,7 +527,8 @@ class ImageModuleTest(unittest.TestCase):
         )
 
         self._assertSurfaceEqual(
-            test_surface, test_rotate_functions, "rotate functions are not symmetric"
+            test_surface, test_rotate_functions,
+            "rotate functions are not symmetric"
         )
 
         rgba_buf = pygame.image.tostring(test_surface, "RGBA")
@@ -531,7 +538,8 @@ class ImageModuleTest(unittest.TestCase):
         )
 
         self._assertSurfaceEqual(
-            test_surface, test_from_argb_string, '"RGBA" rotated to "ARGB" failed'
+            test_surface, test_from_argb_string,
+            '"RGBA" rotated to "ARGB" failed'
         )
 
         argb_buf = pygame.image.tostring(test_surface, "ARGB")
@@ -557,7 +565,7 @@ class ImageModuleTest(unittest.TestCase):
                 'symmetric with "{}" format'.format(fmt),
             )
 
-    def test_tostring_depth_24(self):
+    def test_tostring__depth_24(self):
         test_surface = pygame.Surface((64, 256), depth=24)
         for i in xrange_(256):
             for j in xrange_(16):
@@ -580,7 +588,7 @@ class ImageModuleTest(unittest.TestCase):
             'symmetric with "{}" format'.format(fmt),
         )
 
-    def test_frombuffer_8bit(self):
+    def test_frombuffer__8bit(self):
         """ test reading pixel data from a bytes buffer"""
         pygame.display.init()
         eight_bit_palette_buffer = bytearray([0, 0, 0, 0,
@@ -603,7 +611,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(eight_bit_surf.get_at((3, 3)),
                          pygame.Color(50, 200, 20))
 
-    def test_frombuffer_RGB(self):
+    def test_frombuffer__RGB(self):
         rgb_buffer = bytearray([255, 10, 20,
                                 255, 10, 20,
                                 255, 10, 20,
@@ -630,7 +638,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(rgb_surf.get_at((2, 2)), pygame.Color(0, 0, 0))
         self.assertEqual(rgb_surf.get_at((3, 3)), pygame.Color(50, 200, 20))
 
-    def test_frombuffer_BGR(self):
+    def test_frombuffer__BGR(self):
         bgr_buffer = bytearray([20, 10, 255,
                                 20, 10, 255,
                                 20, 10, 255,
@@ -657,7 +665,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(bgr_surf.get_at((2, 2)), pygame.Color(0, 0, 0))
         self.assertEqual(bgr_surf.get_at((3, 3)), pygame.Color(50, 200, 20))
 
-    def test_frombuffer_RGBX(self):
+    def test_frombuffer__RGBX(self):
         rgbx_buffer = bytearray([255, 10, 20, 255,
                                  255, 10, 20, 255,
                                  255, 10, 20, 255,
@@ -688,7 +696,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(rgbx_surf.get_at((3, 3)),
                          pygame.Color(50, 200, 20, 255))
 
-    def test_frombuffer_RGBA(self):
+    def test_frombuffer__RGBA(self):
         rgba_buffer = bytearray([255, 10, 20, 200,
                                  255, 10, 20, 200,
                                  255, 10, 20, 200,
@@ -719,7 +727,7 @@ class ImageModuleTest(unittest.TestCase):
         self.assertEqual(rgba_surf.get_at((3, 3)),
                          pygame.Color(50, 200, 20, 255))
 
-    def test_frombuffer_ARGB(self):
+    def test_frombuffer__ARGB(self):
         argb_buffer = bytearray([200, 255, 10, 20,
                                  200, 255, 10, 20,
                                  200, 255, 10, 20,
@@ -751,7 +759,8 @@ class ImageModuleTest(unittest.TestCase):
                          pygame.Color(50, 200, 20, 255))
 
     def test_get_extended(self):
-        #Create a png file and try to load it. If it cannot, get_extended() should return False
+        # Create a png file and try to load it. If it cannot, get_extended()
+        # should return False
         raw_image = []
         raw_image.append((200, 200, 200, 255, 100, 100, 100, 255))
 
@@ -829,7 +838,7 @@ class ImageModuleTest(unittest.TestCase):
                 # Test the magic numbers at the start of the file to ensure
                 # they are saved as the correct file type.
                 self.assertEqual(
-                    1, (test_magic(file, magic_hex[fmt.lower()]))
+                    1, (_check_magic(file, magic_hex[fmt.lower()]))
                 )
             # load the file to make sure it was saved correctly
             loaded_file = pygame.image.load(temp_file_name)
@@ -838,9 +847,12 @@ class ImageModuleTest(unittest.TestCase):
             os.remove(temp_file_name)
         # check that .bmp and .tga do not save
         for fmt in failing_formats:
-            self.assertRaises(pygame.error, pygame.image.save_extended, surf, "temp_file.%s" % fmt)
+            self.assertRaises(
+                    pygame.error, pygame.image.save_extended, surf,
+                    "temp_file.%s" % fmt
+            )
 
-    def threads_load(self, images):
+    def _threads_load(self, images):
         import pygame.threads
 
         for i in range(10):
@@ -848,17 +860,17 @@ class ImageModuleTest(unittest.TestCase):
             for s in surfs:
                 self.assertIsInstance(s, pygame.Surface)
 
-    def test_load_png_threads(self):
-        self.threads_load(glob.glob(example_path("data/*.png")))
+    def test_load__png_threads(self):
+        self._threads_load(glob.glob(example_path("data/*.png")))
 
-    def test_load_jpg_threads(self):
-        self.threads_load(glob.glob(example_path("data/*.jpg")))
+    def test_load__jpg_threads(self):
+        self._threads_load(glob.glob(example_path("data/*.jpg")))
 
-    def test_load_bmp_threads(self):
-        self.threads_load(glob.glob(example_path("data/*.bmp")))
+    def test_load__bmp_threads(self):
+        self._threads_load(glob.glob(example_path("data/*.bmp")))
 
-    def test_load_gif_threads(self):
-        self.threads_load(glob.glob(example_path("data/*.gif")))
+    def test_load__gif_threads(self):
+        self._threads_load(glob.glob(example_path("data/*.gif")))
 
 
 if __name__ == "__main__":
