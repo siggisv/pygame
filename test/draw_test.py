@@ -1850,10 +1850,14 @@ class DrawLineTest(LineMixin, DrawTestCase):
             else:
                 expected_color = surf_color
 
-            self.assertEqual(surf.get_at(pt), expected_color,
-                    "Test:{} from:{} to:{} pt:{}".format(
-                        self.func_name, from_point, to_point, pt)
-                    )
+            if PY3:
+                with self.subTest(
+                        from_point=from_point, to_point=to_point, pt=pt):
+                    self.assertEqual(surf.get_at(pt), expected_color)
+            else:
+                self.assertEqual(surf.get_at(pt), expected_color,
+                        "from:{} to:{} pt:{}".format(from_point, to_point, pt)
+                        )
 
         surf.unlock()
 
@@ -1867,7 +1871,6 @@ class DrawLineTest(LineMixin, DrawTestCase):
         area.
         """
 
-        self.func_name = 'test_line__thick_crossing_border'
         self.surface = pygame.Surface((30, 30))
         self.clip_rect = pygame.Rect((10, 10), (11, 11))
         for p_set in ((11, 8, 19, 12), (11, 22, 19, 18)):
