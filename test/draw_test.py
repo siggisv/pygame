@@ -1851,35 +1851,56 @@ class DrawLineTest(LineMixin, DrawTestCase):
                 expected_color = surf_color
 
             if PY3:
-                with self.subTest(
-                        from_point=from_point, to_point=to_point, pt=pt):
+                with self.subTest(thickness=thickness, from_point=from_point,
+                                  to_point=to_point, pt=pt):
                     self.assertEqual(surf.get_at(pt), expected_color)
             else:
                 self.assertEqual(surf.get_at(pt), expected_color,
-                        "from:{} to:{} pt:{}".format(from_point, to_point, pt)
+                        "thickness:{} from:{} to:{} pt:{}".format(
+                            thickness, from_point, to_point, pt)
                         )
 
         surf.unlock()
 
-    def test_line__thick_crossing_border(self):
+    def test_line__thick_shallow_angle_across_border(self):
         """Ensures draw.line with thickness works correctly across borders.
 
-        This checks that when a line crosses the border of a clipping area (and
-        has an inclination that is within 45 degres of the inclination of the
-        border that is crossed) then what is drawn matches what would have
+        This checks that when a line crosses the border of a clipping area
+        (and has an inclination that is within 45 degres of the inclination of
+        the border that is crossed) then what is drawn matches what would have
         been drawn (within the same area) if the surface had not any clipping
         area.
         """
 
         self.surface = pygame.Surface((30, 30))
         self.clip_rect = pygame.Rect((10, 10), (11, 11))
-        for p_set in ((11, 8, 19, 12), (11, 22, 19, 18)):
+        for p_set in ((11, 8, 19, 14), (11, 22, 19, 16)):
             for i in range(4):
                 for j in (1,3):
                     for thickness in (1, 3, 5):
                         from_p = (p_set[i], p_set[(i + j) % 4])
                         to_p = (p_set[(i + 2) % 4], p_set[(i + 2 + j) % 4])
-                        self._check_line_clipping(from_p, to_p, 5)
+                        self._check_line_clipping(from_p, to_p, thickness)
+
+    def test_line__thick_steep_angle_across_border(self):
+        """Ensures draw.line with thickness works correctly across borders.
+
+        This checks that when a line crosses the border of a clipping area
+        (and has an inclination that is between 45 and 90 degres of the
+        inclination of the border that is crossed) then what is drawn matches
+        what would have been drawn (within the same area) if the surface had
+        not any clipping area.
+        """
+
+        self.surface = pygame.Surface((30, 30))
+        self.clip_rect = pygame.Rect((10, 10), (11, 11))
+        p_set = (14, 9, 16, 24)
+        for i in range(4):
+            for j in (1,3):
+                for thickness in (1, ):
+                    from_p = (p_set[i], p_set[(i + j) % 4])
+                    to_p = (p_set[(i + 2) % 4], p_set[(i + 2 + j) % 4])
+                    self._check_line_clipping(from_p, to_p, thickness)
 
 
 ### Lines Testing #############################################################
